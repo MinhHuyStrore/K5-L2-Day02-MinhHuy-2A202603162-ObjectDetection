@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import sys
 from dataclasses import dataclass
@@ -82,7 +83,10 @@ def main() -> int:
     parser.add_argument("--min-mean-iou", type=float, default=0.70)
     parser.add_argument("--output", type=Path, default=Path("outputs/annotation_evaluation.json"))
     args = parser.parse_args()
+    if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
+    student_index = {f.name: f for f in args.student_labels.rglob("*.txt")}
     gold_files = sorted(args.gold_labels.glob("*.txt"))
     if not gold_files:
         raise SystemExit(f"Không có gold labels trong {args.gold_labels}. Hãy đợi giảng viên phát ground truth.")
@@ -91,7 +95,7 @@ def main() -> int:
     per_image = []
     for gold_file in gold_files:
         gold = parse_yolo(gold_file)
-        student = parse_yolo(args.student_labels / gold_file.name)
+        student = parse_yolo(student_index.get(gold_file.name, args.student_labels / gold_file.name))
         matched = match(student, gold, args.iou_threshold)
         true_positive += len(matched)
         false_positive += len(student) - len(matched)

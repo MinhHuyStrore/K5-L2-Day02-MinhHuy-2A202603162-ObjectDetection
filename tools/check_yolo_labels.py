@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import sys
 from pathlib import Path
 
@@ -44,6 +45,8 @@ def main() -> int:
     parser.add_argument("--images", type=Path, default=Path("dataset/images/train"))
     parser.add_argument("--labels", type=Path, default=Path("dataset/labels/train"))
     args = parser.parse_args()
+    if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
     expected = image_stems(args.images)
     if not expected:
